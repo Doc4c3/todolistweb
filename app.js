@@ -10,6 +10,14 @@ const filterBtns = document.querySelectorAll('.filter-btn');
 
 let todos = load();    // 启动时先恢复：单一数据源，DOM 只是它的投影
 let filter = 'all';    // 视图状态：all / active / done
+let lastId = 0;        // id 生成用：保证同一毫秒内也严格递增
+
+// id：以时间戳为基准，同一毫秒内连续添加时递增避让（Date.now() 会撞号）
+function nextId() {
+  const now = Date.now();
+  lastId = now > lastId ? now : lastId + 1;
+  return lastId;
+}
 
 // 存：把新 todos 写进 localStorage
 function save() {
@@ -31,7 +39,7 @@ function load() {
 
 // 添加：展开生成新数组，不改原数组
 function addTodo(text) {
-  todos = [...todos, { id: Date.now(), text, completed: false }];
+  todos = [...todos, { id: nextId(), text, completed: false }];
   save();
   render();
 }
