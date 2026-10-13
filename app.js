@@ -50,7 +50,11 @@ function removeTodo(id) {
   save();
   render();
 }
-
+function clearCompleted(id){
+  todos = todos.filter((t) => !t.completed);
+  save();
+  render();
+}
 // 切换：map + 展开，只替换匹配的那一条
 function toggleTodo(id) {
   todos = todos.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t));
