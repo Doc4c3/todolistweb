@@ -1,30 +1,46 @@
 // Todo 列表 V2.0 —— 数据驱动重构
 // 单一数据源 todos；三个操作统一走「改数据 → 重渲染」
 
+const KEY = 'todos';   // localStorage 存储键名
 const list = document.querySelector('#todo-list');
 const input = document.querySelector('#todo-input');
 const addBtn = document.querySelector('#add-btn');
 const emptyTip = document.querySelector('#empty-tip');
 const filterBtns = document.querySelectorAll('.filter-btn');
 
-let todos = [];        // 单一数据源：DOM 只是它的投影
+let todos = load();    // 启动时先恢复：单一数据源，DOM 只是它的投影
 let filter = 'all';    // 视图状态：all / active / done
+
+// 存：把新 todos 写进 localStorage
+function save() {
+  localStorage.setItem(KEY, JSON.stringify(todos));
+}
+
+// 取：从 localStorage 恢复 todos
+function load() {
+  const raw = localStorage.getItem(KEY);
+  if (raw === null) return [];       // 没存过 → 空数组
+  return JSON.parse(raw);            // 存过 → 解析
+}
 
 // 添加：展开生成新数组，不改原数组
 function addTodo(text) {
   todos = [...todos, { id: Date.now(), text, completed: false }];
+  save();
   render();
 }
 
 // 删除：filter 生成新数组
 function removeTodo(id) {
   todos = todos.filter((t) => t.id !== id);
+  save();
   render();
 }
 
 // 切换：map + 展开，只替换匹配的那一条
 function toggleTodo(id) {
   todos = todos.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t));
+  save();
   render();
 }
 
