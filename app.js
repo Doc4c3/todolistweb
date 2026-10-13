@@ -5,8 +5,10 @@ const list = document.querySelector('#todo-list');
 const input = document.querySelector('#todo-input');
 const addBtn = document.querySelector('#add-btn');
 const emptyTip = document.querySelector('#empty-tip');
+const filterBtns = document.querySelectorAll('.filter-btn');
 
-let todos = [];   // 单一数据源：DOM 只是它的投影
+let todos = [];        // 单一数据源：DOM 只是它的投影
+let filter = 'all';    // 视图状态：all / active / done
 
 // 添加：展开生成新数组，不改原数组
 function addTodo(text) {
@@ -26,11 +28,22 @@ function toggleTodo(id) {
   render();
 }
 
-// 渲染：清空 → 根据 todos 重画整表
+// 筛选：只改视图状态，不动任务数据，因此不需要 save()
+function setFilter(f) {
+  filter = f;
+  filterBtns.forEach((btn) => btn.classList.toggle('active', btn.dataset.filter === f));
+  render();
+}
+
+// 渲染：先过滤（决定显示哪些）→ 清空 → 重画整表
 function render() {
+  const shown = todos.filter((t) =>
+    filter === 'all' ? true : filter === 'done' ? t.completed : !t.completed
+  );
+
   list.innerHTML = '';
 
-  todos.forEach((t) => {
+  shown.forEach((t) => {
     const li = document.createElement('li');
     li.textContent = t.text;   // 纯文本写入，杜绝 HTML 注入
     li.dataset.id = t.id;
@@ -50,7 +63,10 @@ function render() {
     list.appendChild(li);
   });
 
-  emptyTip.style.display = todos.length ? 'none' : '';
+  emptyTip.style.display = shown.length ? 'none' : '';
+  if (!shown.length) {
+    emptyTip.textContent = todos.length ? '当前筛选下没有任务' : '暂无待办事项';
+  }
 }
 
 function handleAdd() {
@@ -69,6 +85,10 @@ function handleAdd() {
 addBtn.addEventListener('click', handleAdd);
 input.addEventListener('keydown', (e) => {
   if (e.key === 'Enter') handleAdd();
+});
+
+filterBtns.forEach((btn) => {
+  btn.addEventListener('click', () => setFilter(btn.dataset.filter));
 });
 
 render();

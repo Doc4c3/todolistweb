@@ -46,6 +46,15 @@
     color: #666; font-size: 14px; cursor: pointer;
   }
   .del-btn:hover { background: #f3d6d6; color: #b91c1c; }
+  /* 筛选按钮：视图状态切换 */
+  .filter-row { display: flex; gap: 8px; margin-bottom: 12px; }
+  .filter-btn {
+    padding: 5px 14px; font-size: 13px; cursor: pointer;
+    border: 1px solid #cfd6e0; border-radius: 14px;
+    background: #fff; color: #555; font-family: inherit;
+  }
+  .filter-btn:hover { border-color: #1F3864; color: #1F3864; }
+  .filter-btn.active { background: #1F3864; border-color: #1F3864; color: #fff; }
   .empty-tip { color: #999; font-size: 13px; text-align: center; padding: 12px 0; }
 </style>
 </head>
@@ -55,6 +64,11 @@
   <div class="input-row">
     <input id="todo-input" type="text" placeholder="输入待办事项，回车或点击添加">
     <button id="add-btn">添加</button>
+  </div>
+  <div class="filter-row">
+    <button class="filter-btn active" data-filter="all">全部</button>
+    <button class="filter-btn" data-filter="active">未完成</button>
+    <button class="filter-btn" data-filter="done">已完成</button>
   </div>
   <ul id="todo-list"></ul>
   <p class="empty-tip" id="empty-tip">暂无待办事项</p>
