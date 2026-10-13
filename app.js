@@ -16,11 +16,17 @@ function save() {
   localStorage.setItem(KEY, JSON.stringify(todos));
 }
 
-// 取：从 localStorage 恢复 todos
+// 取：从 localStorage 恢复 todos（对损坏数据兜底）
 function load() {
   const raw = localStorage.getItem(KEY);
   if (raw === null) return [];       // 没存过 → 空数组
-  return JSON.parse(raw);            // 存过 → 解析
+  try {
+    const data = JSON.parse(raw);    // 存过 → 解析
+    return Array.isArray(data) ? data : [];   // 只接受数组，其余按空数组处理
+  } catch (e) {
+    console.warn('load(): localStorage 中的数据不是合法 JSON，已按空列表处理', e);
+    return [];
+  }
 }
 
 // 添加：展开生成新数组，不改原数组
