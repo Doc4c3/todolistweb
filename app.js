@@ -62,6 +62,51 @@ function toggleTodo(id) {
   render();
 }
 
+// 编辑：map + 展开，只替换匹配那一条的文本
+function editTodo(id, text) {
+  todos = todos.map((t) => (t.id === id ? { ...t, text } : t));
+  save();
+  render();
+}
+
+// 进入编辑态：把 li 的内容临时换成输入框
+// Enter 保存 / Esc 取消 / 失焦保存；空文本视为取消
+function startEdit(item, id) {
+  const todo = todos.find((t) => t.id === id);
+  if (!todo) return;
+
+  const editInput = document.createElement('input');
+  editInput.type = 'text';
+  editInput.value = todo.text;
+  editInput.className = 'edit-input';
+
+  item.textContent = '';
+  item.appendChild(editInput);
+  editInput.focus();
+  editInput.select();
+
+  // 点击输入框不能冒泡到 ul，否则会触发委托里的切换分支
+  editInput.addEventListener('click', (e) => e.stopPropagation());
+
+  let settled = false;   // blur 与 Enter 都会触发收尾，防止执行两次
+  const finish = (commit) => {
+    if (settled) return;
+    settled = true;
+    const text = editInput.value.trim();
+    if (commit && text && text !== todo.text) {
+      editTodo(id, text);   // 改数据 → save → render
+    } else {
+      render();             // 取消或空文本：重渲染恢复原样
+    }
+  };
+
+  editInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') finish(true);
+    else if (e.key === 'Escape') finish(false);
+  });
+  editInput.addEventListener('blur', () => finish(true));
+}
+
 // 筛选：只改视图状态，不动任务数据，因此不需要 save()
 function setFilter(f) {
   filter = f;
@@ -79,21 +124,31 @@ function render() {
 
   shown.forEach((t) => {
     const li = document.createElement('li');
-    li.textContent = t.text;   // 纯文本写入，杜绝 HTML 注入
     li.dataset.id = t.id;
     if (t.completed) li.classList.add('done');
 
-    li.addEventListener('click', () => toggleTodo(t.id));
+    const span = document.createElement('span');
+    span.className = 'text';
+    span.textContent = t.text;   // 纯文本写入，杜绝 HTML 注入
+    li.appendChild(span);
+
+    // 按钮内再包一层 span：验证 e.target 落在按钮内部时 closest 仍能正确上溯
+    const editBtn = document.createElement('button');
+    editBtn.className = 'edit-btn';
+    editBtn.dataset.action = 'edit';
+    const editIcon = document.createElement('span');
+    editIcon.textContent = '✎';
+    editBtn.appendChild(editIcon);
+    li.appendChild(editBtn);
 
     const delBtn = document.createElement('button');
-    delBtn.textContent = '×';
     delBtn.className = 'del-btn';
-    delBtn.addEventListener('click', (e) => {
-      e.stopPropagation();     // 防止顺带触发 li 的切换
-      removeTodo(t.id);
-    });
-
+    delBtn.dataset.action = 'delete';
+    const delIcon = document.createElement('span');
+    delIcon.textContent = '×';
+    delBtn.appendChild(delIcon);
     li.appendChild(delBtn);
+
     list.appendChild(li);
   });
 
@@ -102,6 +157,30 @@ function render() {
     emptyTip.textContent = todos.length ? '当前筛选下没有任务' : '暂无待办事项';
   }
 }
+
+// 事件委托：列表内所有点击统一交给父容器 ul 处理
+// closest('li') 找任务，data-action 分派操作，逐级处理 null 边界
+list.addEventListener('click', (e) => {
+  if (!(e.target instanceof Element)) return;   // 文字节点等非常规目标
+  const item = e.target.closest('li');
+  if (!item || !list.contains(item)) return;    // 点在列表空白处 / 不属于自己的 li
+  const id = Number(item.dataset.id);           // dataset 读出来是字符串，转成数字再比较
+  if (!id) return;
+
+  const delBtn = e.target.closest('[data-action="delete"]');
+  if (delBtn && item.contains(delBtn)) {
+    removeTodo(id);
+    return;   // 删除后必须结束，否则会连带触发下面的切换分支
+  }
+
+  const editBtn = e.target.closest('[data-action="edit"]');
+  if (editBtn && item.contains(editBtn)) {
+    startEdit(item, id);
+    return;
+  }
+
+  toggleTodo(id);
+});
 
 function handleAdd() {
   const text = input.value.trim();

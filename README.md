@@ -26,16 +26,26 @@ Web 编程 第 7 周实验项目：把 V2.0 从「能跑的 Todo 列表」升级
 | 任务状态 | `todos` | 需要 | 从 localStorage 恢复 |
 | 视图状态 | `filter` | 不需要 | 回到默认 `'all'` |
 
+## 事件委托（W8）
+
+列表内不再给每个 li 单独绑事件，所有点击统一委托给父容器 `ul#todo-list`：
+
+- `e.target.closest('li')` 找到任务项，`!item || !list.contains(item)` 兜底空白处点击
+- `dataset.id` 读出的是字符串，用 `Number()` 转换后再与数据比较
+- 按 `data-action` 分派：`delete` 删除、`edit` 进入编辑态，其余点击切换完成状态
+- **删除分支执行后必须 `return`**，否则会连带触发切换（本周调试的缺陷点）
+- 编辑态：`✎` 把 li 临时换成输入框，Enter/失焦保存、Esc 取消，空文本视为取消；输入框上的点击 `stopPropagation`，避免冒泡到 ul 触发切换
+
 ## 文件结构
 
 ```
 index.html   页面结构 + 样式 + 筛选按钮
-app.js       单一数据源、save/load、三个操作函数、render
+app.js       单一数据源、save/load、四个操作函数、render、ul 上的事件委托
 todo.html    W6 基线（DOM 直改版，保留对照）
 todo.js      W6 基线
 ```
 
 ## 分支与提交
 
-- 功能分支：`feature/v2-data-driven`，完成后合并回 `main`
-- 提交历史：基线 → 数据驱动重构 → 筛选 → 持久化 → 容错修复 → id 修复
+- 功能分支：`feature/v2-data-driven`（W7）、`feature/v2-event-delegation`（W8），完成后合并回 `main`
+- 提交历史：基线 → 数据驱动重构 → 筛选 → 持久化 → 容错修复 → id 修复 → 事件委托重构 + 编辑分支
